@@ -1,0 +1,15 @@
+{
+	"filePath" : "./",
+	"fileName" : "testHelloWorld",
+	"fileDescription" : "A test class to print Hello World",
+	"className" : "HelloWorldClass",
+	"classDescription" : "A test class to print Hello World",
+	"functionName" : "HelloWorld",
+	"isUndoable" : true,
+	"hasFlags" : true,
+	"flags" : [
+		{"shortName" : "-mf1", "longName" : "-myFlag1", "type" : "int"},
+		{"shortName" : "-mf2", "longName" : "-myFlag2", "type" : "float"},
+		{"shortName" : "-mf3", "longName" : "-myFlag3", "type" : "MAngle"}
+	]
+}
