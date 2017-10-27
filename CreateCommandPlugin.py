@@ -75,6 +75,7 @@ class PluginFileCreator(object):
 			self.shortFlags = []
 			self.longFlags = []
 			self.flagTypes = []
+			self.defaultValues = []
 			# Create a string for the list
 			shortNames = "["
 			longNames = "["
@@ -84,6 +85,7 @@ class PluginFileCreator(object):
 				self.shortFlags.append(flag["shortName"])
 				self.longFlags.append(flag["longName"])
 				self.flagTypes.append(flag["type"])
+				self.defaultValues.append(flag["defaultValue"])
 				# Append to the string
 				shortNames += "\"" + flag["shortName"] + "\","
 				longNames += "\"" + flag["longName"] + "\","
@@ -113,6 +115,11 @@ class PluginFileCreator(object):
 		if(self.getFromJSON("isUndoable", "bool")):
 			# Write the doIt function
 			if(self.getFromJSON("hasFlags", "bool")):
+				# Define the default values
+				self.writeLine("# Initialise the default values", 2)
+				for flag in flags:
+					self.writeLine("self." + flag["longName"][1:] + "Value = " + str(flag["defaultValue"]), 2)
+				self.writeLine("# Parse the arguments", 2)
 				self.writeLine("self.parseArguments(args)", 2)
 			self.writeLine("self.redoIt()", 2)
 			self.writeLine()
