@@ -142,16 +142,16 @@ class PluginFileCreator(object):
 			self.writeLine("## This function is used for parsing arguments")
 			self.writeLine("def parseArguments(self, args):", 1)
 			self.writeLine("argData = om.MArgParser(self.syntax(), args)", 2)
-			self.writeLine("numArgs = len(shortFlags)", 2)
+			self.writeLine("numArgs = len(shortFlagNames)", 2)
 			self.writeLine("for i in range(numArgs):", 2)
 			numArgs = len(self.shortFlags)
 			for i in range(numArgs):
 				typeCheck = self.flagTypes[i][0].upper() + self.flagTypes[i][1:]
 				# Check for short flag
-				self.writeLine("if argData.isFlagSet(" + self.shortFlags[i] + "):", 3)
-				self.writeLine("self." + self.longFlags[i][1:] + "Value = argData.flagArgument" + typeCheck + "(\"" + self.shortFlags[i] + "\")", 4)
-				self.writeLine("if argData.isFlagSet(" + self.longFlags[i] + "):", 3)
-				self.writeLine("self." + self.longFlags[i][1:] + "Value = argData.flagArgument" + typeCheck + "(\"" + self.longFlags[i] + "\")", 4)
+				self.writeLine("if argData.isFlagSet(\"" + self.shortFlags[i] + "\"):", 3)
+				self.writeLine("self." + self.longFlags[i][1:] + "Value = argData.flagArgument" + typeCheck + "(\"" + self.shortFlags[i] + "\", i)", 4)
+				self.writeLine("if argData.isFlagSet(\"" + self.longFlags[i] + "\"):", 3)
+				self.writeLine("self." + self.longFlags[i][1:] + "Value = argData.flagArgument" + typeCheck + "(\"" + self.longFlags[i] + "\", i)", 4)
 			self.writeLine()
 
 	## Write the plugin initialisation functions
