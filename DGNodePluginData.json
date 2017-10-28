@@ -1,0 +1,17 @@
+{
+	"filePath" : "./",
+	"fileName" : "",
+	"fileDescription" : "",
+	"className" : "",
+	"classDescription" : "",
+	"nodeName" : "",
+	"nodeID" : "",
+	"validTypes" : ["bool", "char", "double", "float", "int", "short"],
+	"inputAttributes" : [
+		{"shortName" : "", "longName" : "", "type" : "", "defaultValue" : , "keyable" : true}
+	],
+	"outputAttributesNotes" : "Make sure to keep dependencies as an array of strings",
+	"outputAttributes" : [
+		{"shortName" : "", "longName" : "", "type" : "", "dependencies" : [""]}
+	]
+}

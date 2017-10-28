@@ -1,14 +1,15 @@
 {
 	"filePath" : "./",
-	"fileName" : "testHelloWorld",
-	"fileDescription" : "A test class to print Hello World",
-	"className" : "HelloWorldClass",
-	"classDescription" : "A test class to print Hello World",
-	"functionName" : "HelloWorld",
+	"fileName" : "",
+	"fileDescription" : "",
+	"className" : "",
+	"classDescription" : "",
+	"functionName" : "",
 	"isUndoable" : true,
 	"hasFlags" : true,
+	"validTypes" : ["bool", "char", "double", "float", "int", "MAngle", "MDistance", "MTime", "short", "string"],
+	"flagInfo" : "Make sure to include the - before the short and long flag names",
 	"flags" : [
-		{"shortName" : "-mf1", "longName" : "-myFlag1", "type" : "int", "defaultValue" : 5},
-		{"shortName" : "-mf2", "longName" : "-myFlag2", "type" : "float", "defaultValue" : 10.0}
+		{"shortName" : "-", "longName" : "-", "type" : "", "defaultValue" : }
 	]
 }
