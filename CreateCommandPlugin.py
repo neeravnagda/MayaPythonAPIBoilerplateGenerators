@@ -1,4 +1,5 @@
 ## CreatePlugin.py
+# This file creates boilerplate code for a command plugin
 
 import json
 
@@ -66,6 +67,11 @@ class PluginFileCreator(object):
 		self.writeLine("#----------------------------------------------------------")
 		self.writeLine("# Plugin")
 		self.writeLine("#----------------------------------------------------------")
+		self.writeLine()
+		# write the plugin name
+		self.writeLine("# The name of the command")
+		kPluginCmdName = self.getFromJSON("functionName")
+		self.writeLine("kPluginCmdName = " + "\"" + kPluginCmdName + "\"")
 		self.writeLine()
 		# Get the flags if necessary
 		if(self.getFromJSON("hasFlags", "bool")):
@@ -149,16 +155,14 @@ class PluginFileCreator(object):
 			self.writeLine("## This function is used for parsing arguments")
 			self.writeLine("def parseArguments(self, args):", 1)
 			self.writeLine("argData = om.MArgParser(self.syntax(), args)", 2)
-			self.writeLine("numArgs = len(shortFlagNames)", 2)
-			self.writeLine("for i in range(numArgs):", 2)
 			numArgs = len(self.shortFlags)
 			for i in range(numArgs):
 				typeCheck = self.flagTypes[i][0].upper() + self.flagTypes[i][1:]
 				# Check for short flag
-				self.writeLine("if argData.isFlagSet(\"" + self.shortFlags[i] + "\"):", 3)
-				self.writeLine("self." + self.longFlags[i][1:] + "Value = argData.flagArgument" + typeCheck + "(\"" + self.shortFlags[i] + "\", i)", 4)
-				self.writeLine("if argData.isFlagSet(\"" + self.longFlags[i] + "\"):", 3)
-				self.writeLine("self." + self.longFlags[i][1:] + "Value = argData.flagArgument" + typeCheck + "(\"" + self.longFlags[i] + "\", i)", 4)
+				self.writeLine("if argData.isFlagSet(\"" + self.shortFlags[i] + "\"):", 2)
+				self.writeLine("self." + self.longFlags[i][1:] + "Value = argData.flagArgument" + typeCheck + "(\"" + self.shortFlags[i] + "\", i)", 3)
+				self.writeLine("if argData.isFlagSet(\"" + self.longFlags[i] + "\"):", 2)
+				self.writeLine("self." + self.longFlags[i][1:] + "Value = argData.flagArgument" + typeCheck + "(\"" + self.longFlags[i] + "\", i)", 3)
 			self.writeLine()
 
 	## Write the plugin initialisation functions
@@ -202,11 +206,6 @@ class PluginFileCreator(object):
 					syntaxType = "kString"
 				self.writeLine("syntax.addFlag(shortFlagNames[%i], longFlagNames[%i], om.MSyntax.%s)" % (i, i, syntaxType), 1)
 			self.writeLine("return syntax", 1)
-		self.writeLine()
-		# write the plugin name
-		self.writeLine("# The name of the command")
-		kPluginCmdName = self.getFromJSON("functionName")
-		self.writeLine("kPluginCmdName = " + "\"" + kPluginCmdName + "\"")
 		self.writeLine()
 		# Write the function for initializePlugin
 		self.writeLine("## Initialise the plugin when Maya loads it")
