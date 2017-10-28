@@ -146,6 +146,10 @@ class PluginFileCreator(object):
 		else:
 			# Write the doIt function
 			if(self.getFromJSON("hasFlags", "bool")):
+				# Define the default values
+				self.writeLine("# Initialise the default values", 2)
+				for flag in flags:
+					self.writeLine("self." + flag["longName"][1:] + "Value = " + str(flag["defaultValue"]), 2)
 				self.writeLine("self.parseArguments(args)", 2)
 			else:
 				self.writeLine("pass", 2)
@@ -160,9 +164,9 @@ class PluginFileCreator(object):
 				typeCheck = self.flagTypes[i][0].upper() + self.flagTypes[i][1:]
 				# Check for short flag
 				self.writeLine("if argData.isFlagSet(\"" + self.shortFlags[i] + "\"):", 2)
-				self.writeLine("self." + self.longFlags[i][1:] + "Value = argData.flagArgument" + typeCheck + "(\"" + self.shortFlags[i] + "\", i)", 3)
+				self.writeLine("self." + self.longFlags[i][1:] + "Value = argData.flagArgument" + typeCheck + "(\"" + self.shortFlags[i] + "\", 0)", 3)
 				self.writeLine("if argData.isFlagSet(\"" + self.longFlags[i] + "\"):", 2)
-				self.writeLine("self." + self.longFlags[i][1:] + "Value = argData.flagArgument" + typeCheck + "(\"" + self.longFlags[i] + "\", i)", 3)
+				self.writeLine("self." + self.longFlags[i][1:] + "Value = argData.flagArgument" + typeCheck + "(\"" + self.longFlags[i] + "\", 0)", 3)
 			self.writeLine()
 
 	## Write the plugin initialisation functions
