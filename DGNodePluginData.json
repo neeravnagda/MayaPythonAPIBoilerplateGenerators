@@ -6,11 +6,13 @@
 	"classDescription" : "",
 	"nodeName" : "",
 	"nodeID" : "",
-	"validTypes" : ["bool", "char", "double", "float", "int", "short"],
+	"validNumericTypes" : ["Bool", "Char", "Double", "2Double", "3Double", "Float", "2Float", "3Float", "Int", "2Int", "3Int", "Short", "2Short", "3Short"],
+	"validNonNumericTypes" : ["DoubleArray", "IntArray", "Matrix", "Mesh", "NurbsCurve", "NurbsSurface",  "String"],
+	"inputAttributeNotes" : "If the type is non-numeric, set the default value, min and max as null. If there is no min and max for numeric types, set to null",
 	"inputAttributes" : [
-		{"shortName" : "", "longName" : "", "type" : "", "defaultValue" : , "keyable" : true}
+		{"shortName" : "", "longName" : "", "type" : "", "defaultValue" : null, "minValue" : null, "maxValue" : null, "keyable" : true}
 	],
-	"outputAttributesNotes" : "Make sure to keep dependencies as an array of strings",
+	"outputAttributesNotes" : "Make sure to keep dependencies as an array of strings. The dependencies can be either long or short names of inputAttributes",
 	"outputAttributes" : [
 		{"shortName" : "", "longName" : "", "type" : "", "dependencies" : [""]}
 	]

@@ -52,3 +52,9 @@ class FileCreator(object):
 	# @param _indent The indentation for the line as a number of tabs
 	def writeLine(self, _text = "", _indent = 0):
 		self.m_fOut.write("\t"*_indent + _text + "\n")
+
+	## Capitalise the first letter of a string
+	# @param _string The string to capitalise
+	# @return The string with the first letter capitalised
+	def capitalise(self, _string):
+		return _string[0].upper() + _string[1:]

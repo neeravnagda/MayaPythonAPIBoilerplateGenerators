@@ -27,13 +27,14 @@ class DGNodeFileCreator(FileCreator.FileCreator):
 		kPluginNodeID = self.getFromJSON("nodeID", "string")
 		self.writeLine("kPluginNodeID = om.MTypeId(" + kPluginNodeID + ")")
 		self.writeLine()
-		# write the default attribute values
+		# write the default attribute values if it is not None, i.e. it is defined
 		self.writeLine("# Default attribute values")
 		self.inputAttributes = self.getFromJSON("inputAttributes", "array")
 		for attr in self.inputAttributes:
-			variableName = attr["longName"] + "Value"
-			variableValue = attr["defaultValue"]
-			self.writeLine(variableName + " = " + str(variableValue))
+			if (attr["defaultValue"] != None):
+				variableName = attr["longName"] + "DefaultValue"
+				variableValue = attr["defaultValue"]
+				self.writeLine(variableName + " = " + str(variableValue))
 		self.writeLine()
 
 	## Write the class definition
@@ -45,12 +46,12 @@ class DGNodeFileCreator(FileCreator.FileCreator):
 		self.writeLine("# Define the attributes", 1)
 		# Write all the input attributes first with the prefix in
 		for attr in self.inputAttributes:
-			variableName = "in" + attr["longName"][0].upper() + attr["longName"][1:]
+			variableName = "in" + self.capitalise(attr["longName"])
 			self.writeLine(variableName + " = om.MObject()", 1)
 		# Write all the output attributes with the prefix out
 		self.outputAttributes = self.getFromJSON("outputAttributes", "array")
 		for attr in self.outputAttributes:
-			variableName = "out" + attr["longName"][0].upper() + attr["longName"][1:]
+			variableName = "out" + self.capitalise(attr["longName"])
 			self.writeLine(variableName + " = om.MObject()", 1)
 		self.writeLine()
 		# write the init function
@@ -71,27 +72,30 @@ class DGNodeFileCreator(FileCreator.FileCreator):
 		className = self.getFromJSON("className", "string")
 		for attr in self.outputAttributes:
 			self.writeLine("# Check if the plug is the %s attribute" % attr["longName"], 2)
-			self.writeLine("if (_plug == " + className + ".out" + attr["longName"][0].upper() + attr["longName"][1:] + "):", 2)
+			self.writeLine("if (_plug == " + className + ".out" + self.capitalise(attr["longName"]) + "):", 2)
 			# Get the handles for the attributes
 			self.writeLine("# Get handles for the attributes", 3)
 			# Get the input values
 			for dependency in attr["dependencies"]:
 				# Check if the dependency is an input attribute
 				try:
-					d = [x["longName"] for x in self.inputAttributes if x["longName"] == dependency][0]
-					self.writeLine(d + "DataHandle = _dataBlock.inputValue(" + className + ".in" + d[0].upper() + d[1:] + ")", 3)
+					d = [x["longName"] for x in self.inputAttributes if (x["longName"] == dependency or x["shortName"] == dependency)][0]
+					self.writeLine(d + "DataHandle = _dataBlock.inputValue(" + className + ".in" + self.capitalise(d) + ")", 3)
 				except:
-					print "Error ", dependency, "is not an input attribute"
-			self.writeLine(attr["longName"] + "DataHandle = _dataBlock.outputValue(" + className + ".out" + attr["longName"][0].upper() + attr["longName"][1:] + ")", 3)
+					print "Warning: ", dependency, "is not an input attribute."
+			self.writeLine(attr["longName"] + "DataHandle = _dataBlock.outputValue(" + className + ".out" + self.capitalise(attr["longName"]) + ")", 3)
 			self.writeLine()
 			# Extract the values
 			self.writeLine("# Get values for the attributes", 3)
 			for dependency in attr["dependencies"]:
 				# Check if the dependency is an input attribute
 				try:
-					dName = [x["longName"] for x in self.inputAttributes if x["longName"] == dependency][0]
-					dType = [x["type"] for x in self.inputAttributes if x["longName"] == dependency][0]
-					self.writeLine(dName + "Value = " + dName + "DataHandle.as" + dType[0].upper() + dType[1:] + "()", 3)
+					dName = [x["longName"] for x in self.inputAttributes if (x["longName"] == dependency or x["shortName"] == dependency)][0]
+					dType = [x["type"] for x in self.inputAttributes if (x["longName"] == dependency or x["shortName"] == dependency)][0]
+					# Check for multiple values, e.g. 2Float, and put the digit at the end of the string
+					if dType[0].isdigit():
+						dType = dType[1:] + dType[0]
+					self.writeLine(dName + "Value = " + dName + "DataHandle.as" + dType + "()", 3)
 				except:
 					pass
 			self.writeLine()
@@ -101,7 +105,7 @@ class DGNodeFileCreator(FileCreator.FileCreator):
 			self.writeLine()
 			# Set the output value
 			self.writeLine("# Set the output value", 3)
-			self.writeLine(attr["longName"] + "DataHandle.set" + attr["type"][0].upper() + attr["type"][1:] + "(" + attr["longName"] + "Value)", 3)
+			self.writeLine(attr["longName"] + "DataHandle.set" + attr["type"] + "(" + attr["longName"] + "Value)", 3)
 			self.writeLine()
 			# Mark the output data handle as clean
 			self.writeLine("# Mark the output data handle as clean", 3)
@@ -135,40 +139,77 @@ class DGNodeFileCreator(FileCreator.FileCreator):
 	def writeNodeInitialiser(self):
 		self.writeLine("## Initialise the node attributes")
 		self.writeLine("def nodeInitializer():")
-		self.writeLine("# Create a numeric attribute function set", 1)
-		self.writeLine("mFnNumericAttribute = om.MFnNumericAttribute()", 1)
+		# Decide if a numeric function set or a typed function set is needed or both
+		numericFn = False
+		typedFn = False
+		numericTypes = self.getFromJSON("validNumericTypes", "array")
+		nonNumericTypes = self.getFromJSON("validNonNumericTypes", "array")
+		for attr in self.inputAttributes + self.outputAttributes:
+			if attr["type"] in numericTypes:
+				numericFn = True
+				break
+			if attr["type"] in nonNumericTypes:
+				typedFn = True
+		# Check if there is a typed function set needed
+		if typedFn == False:
+			for attr in self.inputAttributes + self.outputAttributes:
+				if attr["type"] in nonNumericTypes:
+					typedFn = True
+					break
+		if (numericFn):
+			self.writeLine("# Create a numeric attribute function set", 1)
+			self.writeLine("mFnNumericAttribute = om.MFnNumericAttribute()", 1)
+		if (typedFn):
+			self.writeLine("# Create a non-numeric attribute function set", 1)
+			self.writeLine("mFnTypedAttribute = om.MFnTypedAttribute()", 1)
 		self.writeLine()
 		className = self.getFromJSON("className", "string")
 		# Write the input attributes
 		self.writeLine("# Input node attributes", 1)
 		for attr in self.inputAttributes:
-			variableName = className + ".in" + attr["longName"][0].upper() + attr["longName"][1:]
-			fnParameters = "\"" + attr["longName"] + "\", \"" + attr["shortName"] + "\", om.MFnNumericData.k" + attr["type"][0].upper() + attr["type"][1:] + ", " + attr["longName"] + "defaultValue"
-			self.writeLine(variableName + " = mFnNumericAttribute.create(" + fnParameters  + ")", 1)
-			self.writeLine("mFnNumericAttribute.readable = True", 1)
-			self.writeLine("mFnNumericAttribute.writable = True", 1)
-			self.writeLine("mFnNumericAttribute.storable = True", 1)
-			if attr["keyable"]:
-				self.writeLine("mFnNumericAttribute.keyable = True", 1)
+			# Check if the attribute is numeric or non-numeric (typed)
+			if attr["type"] in numericTypes:
+				attrType = ["Numeric", "Numeric"]
 			else:
-				self.writeLine("mFnNumericAttribute.keyable = False", 1)
+				attrType = ["Typed", ""]
+			variableName = className + ".in" + self.capitalise(attr["longName"])
+			fnParameters = "\"" + attr["longName"] + "\", \"" + attr["shortName"] + "\", om.MFn" + attrType[1] + "Data.k" + attr["type"]
+			if attr["defaultValue"] != None:
+				fnParameters += ", " + attr["longName"] + "DefaultValue"
+			self.writeLine(variableName + " = mFn" + attrType[0] + "Attribute.create(" + fnParameters  + ")", 1)
+			self.writeLine("mFn" + attrType[0] + "Attribute.readable = False", 1)
+			self.writeLine("mFn" + attrType[0] + "Attribute.writable = True", 1)
+			self.writeLine("mFn" + attrType[0] + "Attribute.storable = True", 1)
+			if attr["keyable"]:
+				self.writeLine("mFn" + attrType[0] + "Attribute.keyable = True", 1)
+			else:
+				self.writeLine("mFn" + attrType[0] + "Attribute.keyable = False", 1)
+			if attr["minValue"] != None:
+				self.writeLine("mFn" + attrType[0] + "Attribute.minValue = " + str(attr["minValue"]), 1)
+			if attr["maxValue"] != None:
+				self.writeLine("mFn" + attrType[0] + "Attribute.maxValue = " + str(attr["minValue"]), 1)
 			self.writeLine()
 		# Write the output node attributes
 		self.writeLine("# Output node attributes", 1)
 		for attr in self.outputAttributes:
-			variableName = className + ".out" + attr["longName"][0].upper() + attr["longName"][1:]
-			fnParameters = "\"" + attr["longName"] + "\", \"" + attr["shortName"] + "\", om.MFnNumericData.k" + attr["type"][0].upper() + attr["type"][1:]
-			self.writeLine(variableName + " = mFnNumericAttribute.create(" + fnParameters + ")", 1)
-			self.writeLine("mFnNumericAttribute.readable = True", 1)
-			self.writeLine("mFnNumericAttribute.writable = False", 1)
-			self.writeLine("mFnNumericAttribute.storable = False", 1)
+			# Check if the attribute is numeric or non-numeric (typed)
+			if attr["type"] in numericTypes:
+				attrType = ["Numeric", "Numeric"]
+			else:
+				attrType = ["Typed", ""]
+			variableName = className + ".out" + self.capitalise(attr["longName"])
+			fnParameters = "\"" + attr["longName"] + "\", \"" + attr["shortName"] + "\", om.MFn" + attrType[1] + "Data.k" + attr["type"]
+			self.writeLine(variableName + " = mFn" + attrType[0] + "Attribute.create(" + fnParameters + ")", 1)
+			self.writeLine("mFn" + attrType[0] + "Attribute.readable = True", 1)
+			self.writeLine("mFn" + attrType[0] + "Attribute.writable = False", 1)
+			self.writeLine("mFn" + attrType[0] + "Attribute.storable = False", 1)
 			self.writeLine()
 		# Add the attributes to the class
 		self.writeLine("# Add the attributes to the class", 1)
 		for attr in self.inputAttributes:
-			self.writeLine(className + ".addAttribute(" + className + ".in" + attr["longName"][0].upper() + attr["longName"][1:] + ")", 1)
+			self.writeLine(className + ".addAttribute(" + className + ".in" + self.capitalise(attr["longName"]) + ")", 1)
 		for attr in self.outputAttributes:
-			self.writeLine(className + ".addAttribute(" + className + ".out" + attr["longName"][0].upper() + attr["longName"][1:] + ")", 1)
+			self.writeLine(className + ".addAttribute(" + className + ".out" + self.capitalise(attr["longName"]) + ")", 1)
 		self.writeLine()
 		# Write the dependencies
 		self.writeLine("# Connect input/output dependencies", 1)
@@ -176,8 +217,8 @@ class DGNodeFileCreator(FileCreator.FileCreator):
 			for dependency in attr["dependencies"]:
 				# Check if the dependency is an input attribute
 				try:
-					d = [x["longName"] for x in self.inputAttributes if x["longName"] == dependency][0]
-					self.writeLine(className + ".attributeAffects(" + className + ".in" + d[0].upper() + d[1:] + ", " + className + "out" + attr["longName"][0].upper() + attr["longName"][1:] + ")", 1)
+					d = [x["longName"] for x in self.inputAttributes if (x["longName"] == dependency or x["shortName"] == dependency)][0]
+					self.writeLine(className + ".attributeAffects(" + className + ".in" + self.capitalise(d) + ", " + className + ".out" + self.capitalise(attr["longName"]) + ")", 1)
 				except:
 					pass
 		self.writeLine()
